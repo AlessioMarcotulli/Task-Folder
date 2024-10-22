@@ -84,5 +84,5 @@ def generate_excel_fh_bases(file_input, output_file):
 ###################################################################
 
 file_input = "C:/Users/Utente/Desktop/Tesi/simulations/NEWDELAY/pafam_optimization_results_anno5_bayes_NEWDELAY.xlsx"
-output_file = 'pafam_optimization_results_anno5_bayes_NEWDELAY_fh_bases_year.xlsx'
+output_file = 'pafam_optimization_results_anno5_bayes_dELAY_fh_bases_year.xlsx'
 generate_excel_fh_bases(file_input, output_file)
