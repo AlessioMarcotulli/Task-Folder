@@ -71,14 +71,57 @@ def generate_excel_fh_bases(sim_path, input_file, output_file):
                 output_df.loc[aircraft, 'Configuration'] = aircraft[:2]
 
                 # Custom logic to populate 'extra_col3', ..., 'extra_col6' (after the months)
-                # output_df.loc[aircraft, 'FH new y'] = some_custom_logic3(aircraft, base) #TODO capire come fare
-                # output_df.loc[aircraft, 'Base from'] = some_custom_logic5(aircraft, base)
-                # output_df.loc[aircraft, 'Base to'] = some_custom_logic6(aircraft, base)
-
+                #output_df.loc[aircraft, 'FH new y'] = some_custom_logic3(aircraft, base) #TODO capire come fare
+                
                 # Extract the corresponding row of the sheet
                 fh_row = df_fh.loc[aircraft]
+
+                # Variabili per tracciare transizioni
+                prev_base = None  # Base precedente
+                base_from_set = False  # Flag per indicare se "Base from" è già stato riempito
+                base_to_set = False  # Flag per indicare se "Base to" è già stato riempito
+                stayed_in_one_base = True  # Assumiamo che l'aereo non cambi base finché non troviamo una transizione
+
                 # This is a cycle that iterates for each month in order to check if the aircraft flown in the base of interest    
                 for month in df_fh.columns:
+
+                    current_base = df_aircraft_base_position.loc[aircraft, month]  # Base in cui si trova l'aereo nel mese attuale
+
+                    if current_base == base:
+                    # Se viene da un'altra base, settiamo "Base from"
+                        if prev_base is None and not base_from_set:
+                            output_df.loc[aircraft, 'Base from'] = "-"
+                            base_from_set = True  # Segnala che "Base from" è stato riempito
+                            
+                        # Se viene da un'altra base, settiamo "Base from"
+                        elif prev_base and prev_base != base and not base_from_set:
+                            output_df.loc[aircraft, 'Base from'] = prev_base
+                            base_from_set = True  # Segnala che "Base from" è stato riempito
+                            stayed_in_one_base = False  # Segnaliamo che c'è stato un cambio di base
+
+                        prev_base = base  # Aggiorna la base precedente
+
+                        # Se l'aereo finisce l'anno nella base attuale, "Base to" sarà "-"
+                        if month == df_fh.columns[-1]:
+                            output_df.loc[aircraft, 'Base to'] = "-"
+
+                    # Se l'aereo lascia la base attuale
+                    elif prev_base == base and not base_to_set:
+                        output_df.loc[aircraft, 'Base to'] = current_base
+                        base_to_set = True  # Segnala che "Base to" è stato riempito
+                        stayed_in_one_base = False  # Segnaliamo che c'è stato un cambio di base
+
+                    prev_base = current_base  # Aggiorna la base precedente
+
+                    # Se l'aereo non ha mai cambiato base per tutto l'anno
+                    if stayed_in_one_base:
+                        output_df.loc[aircraft, 'Base from'] = "-"
+                        output_df.loc[aircraft, 'Base to'] = "-"    
+                    
+                    # # Se l'aereo inizia l'anno nella base attuale, "Base from" sarà "-"
+                    # if df_aircraft_base_position.loc[aircraft, df_fh.columns[0]] == base and not base_from_set:
+                    #     output_df.loc[aircraft, 'Base from'] = "-"
+
                     if month in df_aircraft_base_position.columns:  # check that the month appears in both sheet
                         if df_aircraft_base_position.loc[aircraft, month] == base:
                             # If the aircraft flown in the corrispondig base, add to the dataframe the corrisponding row of the fh sheet
@@ -87,13 +130,14 @@ def generate_excel_fh_bases(sim_path, input_file, output_file):
                             # If aircraft didn't fly on that base we add a "-"
                             output_df.loc[aircraft, month] = "-"
 
+                    # Calcolare la somma delle ore di volo per l'aereo
                 fh_flown = pd.to_numeric(output_df.loc[aircraft, df_fh.columns], errors='coerce').sum()  # `errors='coerce'` trasforma valori non numerici in NaN
                 output_df.loc[aircraft, 'FH flown'] = fh_flown  
                          
             else:
                 print(f"Attenzione: {aircraft} non trovato in df_fh")
-
-        
+            
+           
         # Add the DataFrame to the dictionary
         dizionario_output[base] = output_df
 
@@ -118,6 +162,6 @@ def generate_excel_fh_bases(sim_path, input_file, output_file):
 ###################################################################
 
 sim_path = "C:/Users/Utente/Desktop/Tesi/file/dev_Alessio/dev_Alessio/files/outputs_mixed_fleet/task 2 - y1/pafam_optimization_results_2024_11_13_16_27.xlsx"
-output_file = 'FH_bases_pafam_optimization_results_2024_11_13_16_27.xlsx'
+output_file = 'FH_bases_pafam_optimization_results_2024_11_13_16_27-2.xlsx'
 input_file = 'C:/Users/Utente/Desktop/Tesi/file/dev_Alessio/dev_Alessio/files/input_data_mixed_fleet/aircrafts/fleet_25_11baie6f.xlsx'
 generate_excel_fh_bases(sim_path, input_file, output_file)
