@@ -119,13 +119,50 @@ def generate_excel_fh_bases(sim_path, input_file, output_file):
             dizionario_output[prev_base] = pd.DataFrame(columns=aircraft_data.index)
             dizionario_output[prev_base].loc[aircraft] = aircraft_data
 
-    # Ordina le basi in ordine crescente e salva i risultati su Excel
-    with pd.ExcelWriter(output_file) as writer:
-        for base in sorted(dizionario_output.keys()):
-            df = dizionario_output[base]
-            df.to_excel(writer, sheet_name=f"{base}_FH")
+        #Generate excel
+        with pd.ExcelWriter(output_file, engine='xlsxwriter') as writer:
+            for base in sorted(dizionario_output.keys()):
+                df = dizionario_output[base]
+                df.index.name = "Aircrafts"
+                df.to_excel(writer, sheet_name=f"{base}_FH", startrow=2, index=True)
 
-    # # List of all the bases and months in the excel
+                # Ottenere il workbook e il worksheet
+                workbook = writer.book
+                worksheet = writer.sheets[f"{base}_FH"]
+
+                # Scrittura del titolo
+                title = f"{base.replace('_', ' ').upper()}"
+                worksheet.merge_range('G1:M1', title, workbook.add_format({
+                    'bold': True,
+                    'font_size': 24,
+                    'align': 'center',
+                    'valign': 'vcenter'
+                }))
+
+                # Calcolare la somma totale per ogni configurazione
+                config_sum = df.groupby('Configuration')['FH flown'].sum()
+                bold_format = workbook.add_format({'bold': True})
+                # Trova la colonna "fh flown"
+                fh_flown_col = df.columns.get_loc("FH flown")  # Trova l'indice della colonna "fh flown"
+
+                last_row = len(df) + 2  # Calcolare dove termina la tabella
+                sum_row = last_row + 2  # Sposta la somma di due righe più in basso
+
+                # Scrivere la somma totale per "fh flown"
+                sum_formula = f"=SUM({chr(65 + fh_flown_col+1)}3:{chr(65 + fh_flown_col+1)}{last_row+1})"
+                worksheet.write(sum_row, fh_flown_col+1, sum_formula, bold_format)  # Scrive la somma in grassetto
+                worksheet.write(sum_row, fh_flown_col + 3, "Total FH flown in this base", bold_format)
+
+                # Aggiungere la somma per ogni configurazione subito sotto la somma totale
+                config_row_start = sum_row + 1  # Aggiungi la somma configurazioni direttamente sotto la somma totale
+                for idx, (config, total_fh) in enumerate(config_sum.items()):
+                    worksheet.write(config_row_start + idx, fh_flown_col+1, total_fh,
+                                    bold_format)  # Scrive la somma delle ore di volo per configurazione
+                    worksheet.write(config_row_start + idx, fh_flown_col + 3, f"Total FH flown {config}",
+                                    bold_format)  # Scrive il testo "Total FH flown configX"
+
+
+                        # # List of all the bases and months in the excel
     # months = df_fh.columns[1:]  # Tutti i mesi tranne il primo
     # bases = df_aircraft_base_position.values[:, 1:]  # Tutte le basi, saltando la prima colonna
     #
@@ -256,7 +293,7 @@ def generate_excel_fh_bases(sim_path, input_file, output_file):
 
 ###################################################################
 
-sim_path = 'C:/Users/Utente/Desktop/Tesi/file/dev_Alessio/dev_Alessio/files/outputs_mixed_fleet/task2/task 2 - y1/pafam_optimization_results_2024_11_13_16_27.xlsx'
-output_file = 'FH_bases_ultimate_pafam_optimization_results.xlsx'
-input_file = 'C:/Users/Utente/Desktop/Tesi/file/dev_Alessio/dev_Alessio/files/input_data_mixed_fleet/aircrafts/fleet_25_11baie6f.xlsx'
+sim_path = 'C:/Users/Utente/Desktop/Tesi/file/Task/FH-task2/pafam_optimization_results_2024_11_13_16_27.xlsx'
+output_file = 'FH_bases_ultimateBASE_pafam_optimization_results.xlsx'
+input_file = 'C:/Users/Utente/Desktop/Tesi/file/Task/FH-task2/fleet_25_11baie6f.xlsx'
 generate_excel_fh_bases(sim_path, input_file, output_file)
