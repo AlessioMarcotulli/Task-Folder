@@ -26,6 +26,8 @@ def generate_excel_fh_bases(sim_path, input_file, output_file):
     df_fh = pd.read_excel(sim_path, sheet_name='FH', index_col=0)
     df_fh_init = pd.read_excel(input_file, sheet_name='aircrafts', index_col=0)
 
+    seed = 2024
+
     # Create dict with zip()
     # aircraft_list = df_aircraft_base_position.index.tolist()
     # aircraft_to_fh = dict(zip(aircraft_list, input_file))
@@ -135,6 +137,14 @@ def generate_excel_fh_bases(sim_path, input_file, output_file):
                 worksheet.merge_range('G1:M1', title, workbook.add_format({
                     'bold': True,
                     'font_size': 24,
+                    'align': 'center',
+                    'valign': 'vcenter'
+                }))
+
+                anno = f"{seed}"
+                worksheet.merge_range('A2:B2', anno, workbook.add_format({
+                    'bold': True,
+                    'font_size': 16,
                     'align': 'center',
                     'valign': 'vcenter'
                 }))
