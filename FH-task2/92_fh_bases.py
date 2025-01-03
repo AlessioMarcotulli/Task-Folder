@@ -21,6 +21,21 @@ def extract_letters(aircraft):
     match = re.match(r'[A-Za-z]+', aircraft)
     return match.group(0) if match else ''
 
+
+# Funzione per sommare numeri separati da una virgola
+def sum_fh_flown_values(value):
+    if isinstance(value, str) and ',' in value:
+        # Se è una stringa con una virgola, separa e somma i numeri come float
+        numbers = [int(x.strip()) for x in value.split(',')]
+        return int(sum(numbers))  # Converti il risultato finale in intero
+    try:
+        # Prova a convertire il valore in float e poi in intero
+        return value
+    except ValueError:
+        # In caso di errore, restituisci 0
+        return 0
+
+
 def generate_excel_fh_bases(sim_path, input_file, output_file):
     df_aircraft_base_position = pd.read_excel(sim_path, sheet_name='aircraft_base_position', index_col=0)
     df_fh = pd.read_excel(sim_path, sheet_name='FH', index_col=0)
@@ -89,7 +104,7 @@ def generate_excel_fh_bases(sim_path, input_file, output_file):
                 stayed_in_one_base = False
 
                 # Completa i dati per la base precedente
-                fh_flown = pd.to_numeric(aircraft_data[months], errors="coerce").sum()
+                fh_flown = int(pd.to_numeric(aircraft_data[months], errors="coerce").sum())
                 aircraft_data['FH flown'] = fh_flown
 
                 # Gestisci FH init se ci sono più valori
@@ -111,6 +126,7 @@ def generate_excel_fh_bases(sim_path, input_file, output_file):
                         # Se l'aereo è già presente, concatenare i nuovi valori di FH init e FH final
                         existing_data = dizionario_output[prev_base].loc[aircraft].copy()
                         existing_data['FH init'] = f"{existing_data['FH init']}, {aircraft_data['FH init']}"
+                        existing_data['FH flown'] = f"{existing_data['FH flown']}, {aircraft_data['FH flown']}"
                         existing_data['FH final'] = f"{existing_data['FH final']}, {aircraft_data['FH final']}"
                         for month_to_update in months:
                             if aircraft_data[month_to_update] != "-":
@@ -133,7 +149,7 @@ def generate_excel_fh_bases(sim_path, input_file, output_file):
                 aircraft_data[month] = fh_value
 
         # Finalizza i dati per l'ultima base
-        fh_flown = pd.to_numeric(aircraft_data[months], errors="coerce").sum()
+        fh_flown = int(pd.to_numeric(aircraft_data[months], errors="coerce").sum())
         aircraft_data['FH flown'] = fh_flown
 
         # Gestisci FH init per l'ultima base
@@ -153,6 +169,7 @@ def generate_excel_fh_bases(sim_path, input_file, output_file):
                 # Se l'aereo è già presente, concatenare i nuovi valori di FH init e FH final
                 existing_data = dizionario_output[prev_base].loc[aircraft].copy()
                 existing_data['FH init'] = f"{existing_data['FH init']}, {aircraft_data['FH init']}"
+                existing_data['FH flown'] = f"{existing_data['FH flown']}, {aircraft_data['FH flown']}"
                 existing_data['FH final'] = f"{existing_data['FH final']}, {aircraft_data['FH final']}"
                 for month_to_update in months:
                     if aircraft_data[month_to_update] != "-":
@@ -193,6 +210,8 @@ def generate_excel_fh_bases(sim_path, input_file, output_file):
                 }))
 
                 # Calcolare la somma totale per ogni configurazione
+                # Applica la funzione alla colonna 'FH flown'
+                df['FH flown'] = df['FH flown'].apply(sum_fh_flown_values)
                 config_sum = df.groupby('Configuration')['FH flown'].sum()
                 bold_format = workbook.add_format({'bold': True})
                 # Trova la colonna "fh flown"
@@ -202,8 +221,8 @@ def generate_excel_fh_bases(sim_path, input_file, output_file):
                 sum_row = last_row + 2  # Sposta la somma di due righe più in basso
 
                 # Scrivere la somma totale per "fh flown"
-                sum_formula = f"=SUM({chr(65 + fh_flown_col+1)}3:{chr(65 + fh_flown_col+1)}{last_row+1})"
-                worksheet.write(sum_row, fh_flown_col+1, sum_formula, bold_format)  # Scrive la somma in grassetto
+                total_fh_flown = df['FH flown'].sum()
+                worksheet.write(sum_row, fh_flown_col+1, total_fh_flown, bold_format)  # Scrive la somma in grassetto
                 worksheet.write(sum_row, fh_flown_col + 3, "Total FH flown in this base", bold_format)
 
                 # Aggiungere la somma per ogni configurazione subito sotto la somma totale
