@@ -37,6 +37,21 @@ def sum_fh_flown_values(value):
 
 
 def generate_excel_fh_bases(sim_path, input_file, output_file):
+    """
+
+    ## generate_excel_fh_bases
+
+    This function...
+
+    ### Parameters:
+
+
+    ### Returns:
+    - (**):     """
+
+    
+    
+
     df_aircraft_base_position = pd.read_excel(sim_path, sheet_name='aircraft_base_position', index_col=0)
     df_fh = pd.read_excel(sim_path, sheet_name='FH', index_col=0)
     df_fh_init = pd.read_excel(input_file, sheet_name='aircrafts', index_col=0)
@@ -125,9 +140,13 @@ def generate_excel_fh_bases(sim_path, input_file, output_file):
                     if aircraft in dizionario_output[prev_base].index:
                         # Se l'aereo è già presente, concatenare i nuovi valori di FH init e FH final
                         existing_data = dizionario_output[prev_base].loc[aircraft].copy()
+                        existing_data['FH flown'] = pd.to_numeric(existing_data['FH flown'], errors='coerce')
+
                         existing_data['FH init'] = f"{existing_data['FH init']}, {aircraft_data['FH init']}"
-                        existing_data['FH flown'] = f"{existing_data['FH flown']}, {aircraft_data['FH flown']}"
+                        existing_data['FH flown'] = existing_data['FH flown'] + aircraft_data['FH flown']
                         existing_data['FH final'] = f"{existing_data['FH final']}, {aircraft_data['FH final']}"
+                        existing_data['Base from'] = f"{existing_data['Base from']}, {aircraft_data['Base from']}"
+                        existing_data['Base to'] = f"{existing_data['Base to']}, {aircraft_data['Base to']}"
                         for month_to_update in months:
                             if aircraft_data[month_to_update] != "-":
                                 existing_data[month_to_update] = aircraft_data[month_to_update]
@@ -168,9 +187,13 @@ def generate_excel_fh_bases(sim_path, input_file, output_file):
             if aircraft in dizionario_output[prev_base].index:
                 # Se l'aereo è già presente, concatenare i nuovi valori di FH init e FH final
                 existing_data = dizionario_output[prev_base].loc[aircraft].copy()
+                existing_data['FH flown'] = pd.to_numeric(existing_data['FH flown'], errors='coerce')
+
                 existing_data['FH init'] = f"{existing_data['FH init']}, {aircraft_data['FH init']}"
-                existing_data['FH flown'] = f"{existing_data['FH flown']}, {aircraft_data['FH flown']}"
+                existing_data['FH flown'] = existing_data['FH flown'] + aircraft_data['FH flown']
                 existing_data['FH final'] = f"{existing_data['FH final']}, {aircraft_data['FH final']}"
+                existing_data['Base from'] = f"{existing_data['Base from']}, {aircraft_data['Base from']}"
+                existing_data['Base to'] = f"{existing_data['Base to']}, {aircraft_data['Base to']}"
                 for month_to_update in months:
                     if aircraft_data[month_to_update] != "-":
                         existing_data[month_to_update] = aircraft_data[month_to_update]
@@ -235,11 +258,9 @@ def generate_excel_fh_bases(sim_path, input_file, output_file):
 
     print(f"File Excel in {output_file}")
 
-
-
 ###################################################################
 
-sim_path = 'C:/Users/Utente/Desktop/Tesi/file/Task/FH-task2/pafam_optimization_results_2024_11_13_16_27.xlsx'
-output_file = 'FH_bases_ultimateBASE1_pafam_optimization_results.xlsx'
-input_file = 'C:/Users/Utente/Desktop/Tesi/file/Task/FH-task2/fleet_25_11baie6f.xlsx'
+sim_path = "C:/Users/Utente/Desktop/Febbaio 2025/risultat_rmv/risultat_rmv/partendo_da_mutilato/anno5/pafam_optimization_results_2025_1_21_17_48.xlsx"
+output_file = 'results_bases_generation/FH_bases_BASE_primo_anno_mutilato.xlsx.xlsx'
+input_file = 'C:/Users/Utente/Desktop/Tesi/file/Task/FH-task2/results_bases_generation/fleet_25_11baie6f.xlsx'
 generate_excel_fh_bases(sim_path, input_file, output_file)
